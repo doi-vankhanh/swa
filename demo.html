@@ -1,0 +1,243 @@
+<!--
+  Demo e‑commerce single-file
+  File: demo-store.html
+  How to run: save as demo-store.html and open in a browser, or use Live Server in VSCode.
+-->
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Văn Khánh Store — Demo</title>
+  <meta name="description" content="Demo cửa hàng trực tuyến — giao diện responsive, giỏ hàng giả lập, quick view, bộ lọc" />
+  <style>
+    :root{
+      --bg:#071023; --card:#0b1220; --muted:#98a3b8; --accent:#7c5cff; --accent-2:#ffb86b; --glass:rgba(255,255,255,0.04);
+      --radius:12px; --container:1100px;
+      --max-width:1100px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    /* reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{background:linear-gradient(180deg,#041026 0%, #071023 70%);color:#eaf2ff;display:flex;justify-content:center;padding:28px}
+    a{color:inherit;text-decoration:none}
+    .wrap{width:100%;max-width:var(--container)}
+
+    /* HEADER */
+    header{display:flex;align-items:center;gap:18px;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#5bd4ff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#041026;box-shadow:0 10px 30px rgba(124,92,255,0.12)}
+    .brand h1{font-size:18px;margin:0}
+    .brand p{font-size:12px;color:var(--muted);margin-top:2px}
+
+    .nav-actions{display:flex;align-items:center;gap:12px}
+    .search{display:flex;align-items:center;background:var(--glass);padding:8px 12px;border-radius:999px;gap:8px;color:var(--muted);min-width:260px}
+    .search input{background:transparent;border:0;outline:none;color:inherit;width:160px}
+    .btn{border:0;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#5bd4ff);color:#041026}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .cart{position:relative;background:var(--glass);padding:8px 14px;border-radius:999px;cursor:pointer}
+    .cart .count{position:absolute;right:-8px;top:-8px;background:#ff6b6b;color:white;padding:4px 6px;border-radius:999px;font-weight:800;font-size:12px;box-shadow:0 8px 18px rgba(255,107,107,0.14)}
+
+    /* HERO */
+    .hero{display:flex;align-items:center;gap:20px;padding:22px;border-radius:14px;background:linear-gradient(90deg, rgba(124,92,255,0.08), rgba(91,212,255,0.04));margin-bottom:18px}
+    .hero .left{flex:1}
+    .eyebrow{font-size:13px;color:var(--accent-2);font-weight:700}
+    .hero h2{font-size:26px;margin:8px 0 6px}
+    .hero p{color:var(--muted);max-width:70%}
+
+    /* FILTERS */
+    .filters{display:flex;gap:10px;align-items:center;margin:12px 0}
+    .filters .tag{background:var(--glass);padding:8px 10px;border-radius:999px;color:var(--muted);font-weight:700}
+
+    /* GRID */
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+    .card{background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.02));padding:12px;border-radius:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 26px rgba(3,8,22,0.6);transition:transform .18s ease,box-shadow .18s ease}
+    .card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(3,8,22,0.7)}
+    .media{height:160px;border-radius:10px;background:linear-gradient(135deg,#071028 0%, rgba(255,255,255,0.02) 100%);display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .media img{width:100%;height:100%;object-fit:cover}
+    .meta{display:flex;justify-content:space-between;align-items:center}
+    .title{font-weight:800}
+    .price{font-weight:900;color:var(--accent-2)}
+    .desc{color:var(--muted);font-size:13px;line-height:1.35;min-height:38px}
+    .card-actions{display:flex;gap:8px;margin-top:auto}
+    .small{padding:8px 10px;border-radius:10px;font-weight:800;cursor:pointer}
+    .small.ghost{background:var(--glass);color:var(--muted)}
+    .small.add{background:linear-gradient(90deg,var(--accent),#5bd4ff);color:#041026}
+
+    /* MODAL / OVERLAY */
+    .overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:90}
+    .modal{width:920px;max-width:100%;background:linear-gradient(180deg,#071026,#07172a);border-radius:12px;padding:18px;color:#e9f3ff;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .m-media{height:360px;border-radius:10px;overflow:hidden}
+    .m-media img{width:100%;height:100%;object-fit:cover}
+    .m-body h3{margin:0 0 6px}
+    .m-body p{color:var(--muted);line-height:1.5}
+    .close-btn{position:absolute;right:18px;top:18px;background:transparent;border:0;color:var(--muted);font-weight:700;cursor:pointer}
+
+    /* TOAST */
+    .toast{position:fixed;right:22px;bottom:22px;background:linear-gradient(90deg,var(--accent),#5bd4ff);color:#041026;padding:12px 16px;border-radius:12px;font-weight:800;box-shadow:0 10px 30px rgba(124,92,255,0.16);display:none;z-index:120}
+
+    /* RESPONSIVE */
+    @media (max-width: 1000px){ .grid{grid-template-columns:repeat(3,1fr)} }
+    @media (max-width: 750px){ .grid{grid-template-columns:repeat(2,1fr)} .hero p{max-width:100%} .search{min-width:160px} }
+    @media (max-width: 420px){ .grid{grid-template-columns:1fr} header{flex-direction:column;align-items:flex-start;gap:12px} .search{min-width:100%;width:100%} .nav-actions{width:100%;display:flex;justify-content:space-between} }
+
+    /* tiny helpers */
+    .muted{color:var(--muted)}
+    .center{display:flex;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="logo">VK</div>
+        <div>
+          <h1>Văn Khánh Store</h1>
+          <p class="muted">Thiết kế • Sáng tạo • Công nghệ</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <div class="search" role="search" aria-label="Tìm kiếm">
+          🔎 <input id="q" placeholder="Tìm sản phẩm, ví dụ: tai nghe..." />
+          <button class="btn ghost" onclick="applySearch()">Tìm</button>
+        </div>
+        <button class="cart" onclick="openCart()" title="Giỏ hàng">
+          🛒 Giỏ hàng <span id="cartCount" class="count" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="left">
+        <div class="eyebrow">Bộ sưu tập mới • Mùa 2025</div>
+        <h2>Thiết kế tinh tế — Trải nghiệm chân thực</h2>
+        <p class="muted">Khám phá sản phẩm tuyển chọn: từng đường nét, từng chip xử lý, kể một câu chuyện nơi công nghệ gặp thẩm mỹ.</p>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn primary" onclick="scrollToGrid()">Xem sản phẩm</button>
+          <button class="btn ghost" onclick="filterTag('hot')">Hot nhất</button>
+        </div>
+      </div>
+      <div class="right center">
+        <div style="background:var(--glass);padding:10px;border-radius:10px">Free shipping • Trả góp 0%</div>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="filters">
+        <button class="btn ghost" onclick="resetFilters()">Tất cả</button>
+        <button class="btn ghost" onclick="filterTag('headphones')">Tai nghe</button>
+        <button class="btn ghost" onclick="filterTag('speaker')">Loa</button>
+        <button class="btn ghost" onclick="filterTag('accessory')">Phụ kiện</button>
+      </div>
+      <div class="muted" id="countLabel">0 sản phẩm</div>
+    </div>
+
+    <!-- Product Grid -->
+    <main id="productGrid" class="grid" style="margin-top:14px"></main>
+
+    <div style="color:var(--muted);margin-top:18px;font-size:13px;text-align:center">Văn Khánh — Kết nối ý tưởng với trải nghiệm số.</div>
+  </div>
+
+  <!-- Modal -->
+  <div id="overlay" class="overlay" onclick="closeModal(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle" onclick="event.stopPropagation()">
+      <button class="close-btn" onclick="closeModal()">✕</button>
+      <div class="m-media"><img id="mImg" src="" alt="product image"></div>
+      <div class="m-body">
+        <h3 id="mTitle">Product name</h3>
+        <div class="muted" id="mTag">Category</div>
+        <p id="mDesc">Product description...</p>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+          <div style="font-size:22px;font-weight:900;color:var(--accent-2)" id="mPrice">₫0</div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="small ghost" onclick="addToCartFromModal()">Thêm vào giỏ</button>
+            <button class="small add" onclick="buyNow()">Mua ngay</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">Đã thêm vào giỏ</div>
+
+  <script>
+    // sample products
+    const PRODUCTS = [
+      {id:1,name:"Aurora Headphones",price:1990000,tag:"headphones",img:"https://picsum.photos/id/1005/800/600",desc:"Tai nghe không dây chống ồn, âm thanh cân bằng, pin 40 giờ."},
+      {id:2,name:"Echo Mini Speaker",price:890000,tag:"speaker",img:"https://picsum.photos/id/1025/800/600",desc:"Loa di động nhỏ gọn, bass sâu, Bluetooth 5.2."},
+      {id:3,name:"Lumina Soundbar",price:2490000,tag:"speaker",img:"https://picsum.photos/id/1074/800/600",desc:"Soundbar cho TV, hỗ trợ Dolby Atmos."},
+      {id:4,name:"Nimbus Earbuds",price:1290000,tag:"headphones",img:"https://picsum.photos/id/1044/800/600",desc:"Earbuds nhẹ, chống nước IPX5, sạc không dây."},
+      {id:5,name:"Canvas Cover Case",price:290000,tag:"accessory",img:"https://picsum.photos/id/1011/800/600",desc:"Ốp lưng vải canvas, thiết kế tối giản."},
+      {id:6,name:"Pulse Charging Dock",price:499000,tag:"accessory",img:"https://picsum.photos/id/1035/800/600",desc:"Dock sạc nhanh đa thiết bị, 65W."},
+      {id:7,name:"Horizon Pro",price:3390000,tag:"headphones",img:"https://picsum.photos/id/1003/800/600",desc:"Tai nghe over-ear cao cấp, driver 50mm."},
+      {id:8,name:"Orbit Wireless",price:760000,tag:"accessory",img:"https://picsum.photos/id/1060/800/600",desc:"Bộ thu phát không dây, latency thấp."}
+    ];
+
+    // state
+    let cart = {};
+    const grid = document.getElementById('productGrid');
+    const countLabel = document.getElementById('countLabel');
+    const cartCountEl = document.getElementById('cartCount');
+    const toast = document.getElementById('toast');
+
+    function formatVND(n){ return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' ₫'; }
+
+    function render(products){
+      grid.innerHTML = '';
+      products.forEach(p=>{
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="media"><img loading="lazy" src="${p.img}" alt="${p.name}"></div>
+          <div class="meta"><div class="title">${p.name}</div><div class="price">${formatVND(p.price)}</div></div>
+          <div class="desc">${p.desc}</div>
+          <div class="card-actions">
+            <button class="small ghost" onclick="quickView(${p.id})">Quick View</button>
+            <button class="small add" onclick="addToCart(${p.id})">Thêm vào giỏ</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      countLabel.textContent = `${products.length} sản phẩm`;
+    }
+
+    render(PRODUCTS);
+
+    function filterTag(tag){
+      if(tag === 'hot'){
+        render(PRODUCTS.filter(p=>p.price>1000000));
+      } else {
+        render(PRODUCTS.filter(p=>p.tag===tag));
+      }
+    }
+    function resetFilters(){ render(PRODUCTS); }
+    function applySearch(){ const q = document.getElementById('q').value.trim().toLowerCase(); render(PRODUCTS.filter(p=>p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))); }
+    function scrollToGrid(){ document.getElementById('productGrid').scrollIntoView({behavior:'smooth',block:'start'}); }
+
+    // cart
+    function addToCart(id){ cart[id] = (cart[id]||0)+1; updateCartUI(); showToast('Đã thêm vào giỏ 🎉'); }
+    function addToCartFromModal(){ const id = Number(document.getElementById('mTitle').dataset.id); addToCart(id); }
+    function updateCartUI(){ const total = Object.values(cart).reduce((a,b)=>a+b,0); if(total>0){ cartCountEl.style.display='inline-block'; cartCountEl.textContent = total; } else { cartCountEl.style.display='none'; } }
+    function openCart(){ const total = Object.values(cart).reduce((a,b)=>a+b,0); if(total===0) alert('Giỏ hàng trống. Thêm vài thứ đi 😎'); else { let text='Giỏ hàng của bạn:\n\n'; let sum=0; for(const [id,qty] of Object.entries(cart)){ const p=PRODUCTS.find(x=>x.id==id); text+=`${p.name} × ${qty} — ${formatVND(p.price*qty)}\n`; sum += p.price*qty; } text += `\nTổng: ${formatVND(sum)}\n\n(Thanh toán: giả lập)`; alert(text); } }
+
+    // modal
+    function quickView(id){ const p = PRODUCTS.find(x=>x.id===id); document.getElementById('mImg').src = p.img; const mt = document.getElementById('mTitle'); mt.textContent = p.name; mt.dataset.id = p.id; document.getElementById('mTag').textContent = p.tag; document.getElementById('mDesc').textContent = p.desc; document.getElementById('mPrice').textContent = formatVND(p.price); document.getElementById('overlay').style.display='flex'; document.body.style.overflow='hidden'; }
+    function closeModal(e){ if(e && e.target && e.target.id !== 'overlay') return; document.getElementById('overlay').style.display='none'; document.body.style.overflow=''; }
+    function buyNow(){ showToast('Đi tới thanh toán (giả lập)'); }
+
+    // toast
+    let toastTimer = null; function showToast(msg='Đã thêm vào giỏ'){ toast.textContent = msg; toast.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ toast.style.display='none'; },2200); }
+
+    // keyboard
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal({target:'overlay'}); });
+
+  </script>
+</body>
+</html>
